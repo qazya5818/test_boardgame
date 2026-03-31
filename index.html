@@ -1,0 +1,1700 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Board Game</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: #000;
+      display: flex;
+      justify-content: flex-start;
+      align-items: flex-start;
+    }
+
+    #app {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 1920px;
+      height: 1020px;
+      overflow: hidden;
+      transform-origin: top left;
+      background-image: url('images/bg.png');
+      background-size: 1920px 1020px;
+      background-position: top left;
+      background-repeat: no-repeat;
+    }
+
+    /* ───────────────────────────────
+       캐릭터 그룹
+    ─────────────────────────────── */
+    #char-group,
+    #char-group2 {
+      position: absolute;
+    }
+
+    #char-group  { left: 130px; top: 141px; transition: left 0.66s ease, top 0.66s ease; z-index: 2; }
+    #char-group2 { left:   7px; top: 141px; transition: left 0.66s ease, top 0.66s ease; z-index: 1; }
+
+    #char-group img,
+    #char-group2 img {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    #char-blur,
+    #char-blur2 {
+      visibility: hidden; /* 이벤트 전까지 비표시 */
+      animation: none;
+    }
+
+    #char-blur.active,
+    #char-blur2.active {
+      visibility: visible;
+      animation: blurPulse 0.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes blurPulse {
+      from { opacity: 0.5; }
+      to   { opacity: 1.0; }
+    }
+
+    /* ───────────────────────────────
+       버튼
+    ─────────────────────────────── */
+    .btn {
+      position: absolute;
+      cursor: pointer;
+      transition: transform 0.15s ease, filter 0.15s ease;
+      user-select: none;
+    }
+
+    .btn:hover {
+      transform: scale(1.05);
+    }
+
+    .btn:active {
+      transform: scale(0.95);
+    }
+
+    #btn-how   { left: 1735px; top:  120px; }
+    #pop-1-wrapper {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 20002;
+      display: none;
+    }
+    #pop-1 {
+      display: block;
+    }
+    #pop-1-close {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 100px;
+      height: 100px;
+      cursor: pointer;
+    }
+    #btn-start { left:  758px; top:  374px; z-index: 9999; }
+    #btn-dice  { left: 1638px; top:  770px; }
+    @keyframes dice-blink {
+      0%, 100% { outline: 6px solid transparent; outline-offset: 2px; border-radius: 30px; }
+      50%       { outline: 6px solid red;         outline-offset: 2px; border-radius: 30px; }
+    }
+    #btn-dice.pulse { animation: dice-blink 0.8s ease-in-out infinite; }
+
+    #btn-restart {
+      position: absolute;
+      left: 1461px;
+      top: 920px;
+      display: none;
+      cursor: pointer;
+      background: #e05c2a;
+      color: #fff;
+      font-size: 22px;
+      font-weight: bold;
+      border: none;
+      border-radius: 12px;
+      padding: 16px 28px;
+      z-index: 9999;
+      transition: transform 0.15s ease;
+      user-select: none;
+    }
+
+    #btn-restart:hover  { transform: scale(1.05); }
+    #btn-restart:active { transform: scale(0.95); }
+
+    /* ───────────────────────────────
+       박스 버튼 그룹
+    ─────────────────────────────── */
+    #btn-box-group {
+      position: absolute;
+      left: 511px;
+      top: 726px;
+      display: none;
+      gap: 72px;
+      z-index: 10002;
+    }
+
+    #btn-box2-group {
+      position: absolute;
+      left: 646px;
+      top: 582px;
+      width: 628px;
+      height: 266px;
+      display: none;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10002;
+    }
+
+    .btn-box-toggle {
+      position: relative;
+      cursor: pointer;
+    }
+
+    #btn-box-group.box-disabled {
+      pointer-events: none;
+      opacity: 0.4;
+    }
+
+    .btn-box-toggle img {
+      display: block;
+    }
+
+    .btn-box-toggle img.hidden {
+      display: none;
+    }
+
+    #btn-test-goal,
+    #btn-test-room,
+    #btn-test-step {
+      position: absolute;
+      left: 20px;
+      font-size: 10pt;
+      cursor: pointer;
+      background: rgba(0,0,0,0.5);
+      color: #fff;
+      border: 1px solid #fff;
+      border-radius: 4px;
+      padding: 4px 8px;
+      z-index: 99999;
+      opacity: 0.7;
+    }
+
+    #btn-test-goal  { bottom: 50px; }
+    #btn-test-room  { bottom: 20px; }
+    #btn-test-step  { bottom: 100px; }
+
+    /* ───────────────────────────────
+       주사위 스프라이트 애니메이션
+    ─────────────────────────────── */
+    .dice-sprite {
+      position: absolute;
+      left: 50%;
+      top: calc(50% - 90px);
+      transform: translate(-50%, -50%);
+      width: 323px;
+      height: 670px;
+      background-repeat: no-repeat;
+      background-position: 0 0;
+      background-size: 7106px 670px; /* 323*22=7106 */
+      display: none;
+      cursor: pointer;
+      z-index: 20001;
+    }
+
+    #dice-sprite-1 { background-image: url('images/dice/dice_1.png'); }
+    #dice-sprite-2 { background-image: url('images/dice/dice_2.png'); }
+    #dice-sprite-3 { background-image: url('images/dice/dice_3.png'); }
+    #dice-sprite-4 { background-image: url('images/dice/dice_4.png'); }
+    #dice-sprite-5 { background-image: url('images/dice/dice_5.png'); }
+    #dice-sprite-6 { background-image: url('images/dice/dice_6.png'); }
+
+    @keyframes diceRoll {
+      from { background-position: 0 0; }
+      to   { background-position: -7106px 0; }
+    }
+
+    .dice-sprite.playing {
+      animation: diceRoll 2s steps(22, end);
+    }
+
+    /* ───────────────────────────────
+       방 컨테이너 (25개)
+    ─────────────────────────────── */
+    .room {
+      position: absolute;
+      width: 177px;
+      height: 216px;
+    }
+
+    #room-1  { left:  295px; top: 151px; }
+    #room-2  { left:  479px; top: 151px; }
+    #room-3  { left:  670px; top: 151px; }
+    #room-4  { left:  872px; top: 151px; }
+    #room-5  { left: 1062px; top: 151px; }
+    #room-6  { left: 1239px; top: 151px; }
+    #room-7  { left: 1430px; top: 151px; }
+    #room-8  { left: 1638px; top: 151px; }
+    #room-9  { left: 1647px; top: 289px; }
+    #room-10 { left: 1652px; top: 494px; }
+    #room-11 { left: 1461px; top: 475px; }
+    #room-12 { left: 1270px; top: 475px; }
+    #room-13 { left: 1079px; top: 465px; }
+    #room-14 { left:  885px; top: 465px; }
+    #room-15 { left:  699px; top: 460px; }
+    #room-16 { left:  513px; top: 452px; }
+    #room-17 { left:  327px; top: 444px; }
+    #room-18 { left:  141px; top: 430px; }
+    #room-19 { left:  136px; top: 597px; }
+    #room-20 { left:  130px; top: 756px; }
+    #room-21 { left:  318px; top: 756px; }
+    #room-22 { left:  513px; top: 748px; }
+    #room-23 { left:  677px; top: 748px; }
+    #room-24 { left:  885px; top: 748px; }
+    #room-25 { left: 1105px; top: 741px; }
+
+    /* ───────────────────────────────
+       슬라이드 컨테이너
+    ─────────────────────────────── */
+    #slide-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 1920px;
+      height: 1020px;
+      display: none;
+      z-index: 10001;
+    }
+
+    #slide-img {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    #slide-close {
+      position: absolute;
+      left: 1665px;
+      top: 91px;
+      width: 80px;
+      height: 80px;
+      cursor: pointer;
+      background: transparent;
+      border: none;
+    }
+
+    /* ───────────────────────────────
+       slide-1 전용 요소
+    ─────────────────────────────── */
+    #slide-1-content {
+      display: none;
+    }
+
+    #box-g {
+      position: absolute;
+      left: 323px;
+      top: 490px;
+      width: 1279px;
+      height: 149px;
+      background-color: #DBDBDB;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #btn-sample {
+      position: absolute;
+      left: 888px;
+      top: 521px;
+      cursor: pointer;
+      z-index: 1;
+    }
+
+    #btn-question {
+      position: absolute;
+      left: 899px;
+      top: 503px;
+      cursor: pointer;
+      display: none;
+      z-index: 10003;
+    }
+
+    /* ───────────────────────────────
+       slide-3 전용 요소
+    ─────────────────────────────── */
+    #slide-3-content {
+      display: none;
+    }
+
+    #box-g-3 {
+      position: absolute;
+      left: 817px;
+      top: 522px;
+      width: 275px;
+      height: 91px;
+      background-color: #DBDBDB;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ───────────────────────────────
+       slide-7 전용 요소
+    ─────────────────────────────── */
+    #slide-7-content {
+      display: none;
+    }
+
+    #box-g-7 {
+      position: absolute;
+      left: 822px;
+      top: 559px;
+      width: 276px;
+      height: 91px;
+      background-color: #DBDBDB;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #btn-question-7 {
+      position: absolute;
+      left: 899px;
+      top: 541px;
+      cursor: pointer;
+      z-index: 1;
+    }
+
+    /* ───────────────────────────────
+       slide-5 전용 요소
+    ─────────────────────────────── */
+    #slide-5-content {
+      display: none;
+    }
+
+    #box-g-5 {
+      position: absolute;
+      left: 321px;
+      top: 522px;
+      width: 1267px;
+      height: 91px;
+      background-color: #EFEFEF;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #btn-sample-5 {
+      position: absolute;
+      left: 888px;
+      top: 526px;
+      cursor: pointer;
+      z-index: 1;
+    }
+
+    /* ───────────────────────────────
+       slide-8 전용 요소
+    ─────────────────────────────── */
+    #slide-8-content {
+      display: none;
+    }
+
+    #box-g-8 {
+      position: absolute;
+      left: 323px;
+      top: 521px;
+      width: 1270px;
+      height: 91px;
+      background-color: #DBDBDB;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #btn-sample-8 {
+      position: absolute;
+      left: 888px;
+      top: 526px;
+      cursor: pointer;
+      z-index: 1;
+    }
+
+    /* ───────────────────────────────
+       slide-12 전용 요소
+    ─────────────────────────────── */
+    #slide-12-content {
+      display: none;
+    }
+
+    #box-g-12 {
+      position: absolute;
+      left: 823px;
+      top: 521px;
+      width: 270px;
+      height: 91px;
+      background-color: #DBDBDB;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #btn-question-12 {
+      position: absolute;
+      left: 899px;
+      top: 503px;
+      cursor: pointer;
+      z-index: 1;
+    }
+
+    /* ───────────────────────────────
+       slide-13 전용 요소
+    ─────────────────────────────── */
+    #slide-13-content {
+      display: none;
+    }
+
+    #box-g-13 {
+      position: absolute;
+      left: 321px;
+      top: 522px;
+      width: 1267px;
+      height: 91px;
+      background-color: #DBDBDB;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #btn-sample-13 {
+      position: absolute;
+      left: 888px;
+      top: 526px;
+      cursor: pointer;
+      z-index: 1;
+    }
+
+    /* ───────────────────────────────
+       slide-15 전용 요소
+    ─────────────────────────────── */
+    #slide-15-content {
+      display: none;
+    }
+
+    #box-g-15 {
+      position: absolute;
+      left: 321px;
+      top: 522px;
+      width: 1267px;
+      height: 91px;
+      background-color: #DBDBDB;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #btn-sample-15 {
+      position: absolute;
+      left: 888px;
+      top: 526px;
+      cursor: pointer;
+      z-index: 1;
+    }
+
+    /* ───────────────────────────────
+       slide-16 전용 요소
+    ─────────────────────────────── */
+    #slide-16-content {
+      display: none;
+    }
+
+    #box-g-16 {
+      position: absolute;
+      left: 833px;
+      top: 521px;
+      width: 250px;
+      height: 91px;
+      background-color: #DBDBDB;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #btn-question-16 {
+      position: absolute;
+      left: 899px;
+      top: 503px;
+      cursor: pointer;
+      z-index: 1;
+    }
+
+    /* ───────────────────────────────
+       slide-18 전용 요소
+    ─────────────────────────────── */
+    #slide-18-content {
+      display: none;
+    }
+
+    #box-g-18 {
+      position: absolute;
+      left: 833px;
+      top: 521px;
+      width: 250px;
+      height: 91px;
+      background-color: #EDEDED;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #btn-question-18 {
+      position: absolute;
+      left: 899px;
+      top: 503px;
+      cursor: pointer;
+      z-index: 1;
+    }
+
+    /* ───────────────────────────────
+       slide-19 전용 요소
+    ─────────────────────────────── */
+    #slide-19-content {
+      display: none;
+    }
+
+    #box-g-19 {
+      position: absolute;
+      left: 314px;
+      top: 522px;
+      width: 1267px;
+      height: 91px;
+      background-color: #DBDBDB;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #btn-sample-19 {
+      position: absolute;
+      left: 888px;
+      top: 526px;
+      cursor: pointer;
+      z-index: 1;
+    }
+
+    /* ───────────────────────────────
+       slide-21 전용 요소
+    ─────────────────────────────── */
+    #slide-21-content {
+      display: none;
+    }
+
+    #box-g-21 {
+      position: absolute;
+      left: 314px;
+      top: 522px;
+      width: 1267px;
+      height: 91px;
+      background-color: #DBDBDB;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #btn-sample-21 {
+      position: absolute;
+      left: 888px;
+      top: 526px;
+      cursor: pointer;
+      z-index: 1;
+    }
+
+    /* ───────────────────────────────
+       slide-22 전용 요소
+    ─────────────────────────────── */
+    #slide-22-content {
+      display: none;
+    }
+
+    #box-g-22 {
+      position: absolute;
+      left: 314px;
+      top: 522px;
+      width: 1267px;
+      height: 91px;
+      background-color: #DBDBDB;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #btn-sample-22 {
+      position: absolute;
+      left: 888px;
+      top: 526px;
+      cursor: pointer;
+      z-index: 1;
+    }
+
+    /* ───────────────────────────────
+       slide-20 전용 요소
+    ─────────────────────────────── */
+    #slide-20-content {
+      display: none;
+    }
+
+    #box-g-20 {
+      position: absolute;
+      left: 314px;
+      top: 521px;
+      width: 1267px;
+      height: 91px;
+      background-color: #DBDBDB;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #btn-sample-20 {
+      position: absolute;
+      left: 888px;
+      top: 526px;
+      cursor: pointer;
+      z-index: 1;
+    }
+
+    /* ───────────────────────────────
+       slide-11 전용 요소
+    ─────────────────────────────── */
+    #slide-11-content {
+      display: none;
+    }
+
+    #box-g-11 {
+      position: absolute;
+      left: 775px;
+      top: 521px;
+      width: 366px;
+      height: 91px;
+      background-color: #DBDBDB;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #btn-question-11 {
+      position: absolute;
+      left: 899px;
+      top: 503px;
+      cursor: pointer;
+      z-index: 1;
+    }
+
+    /* ───────────────────────────────
+       팝업 컨테이너 (6개 + 7)
+    ─────────────────────────────── */
+    #popup-7 {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 1920px;
+      height: 1020px;
+      display: none;
+      z-index: 10000;
+    }
+
+    #popup-7 .pop-img {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    #popup-7 #btn-select1 { position: absolute; left: 719px; top: 560px; }
+    #popup-7 #btn-select2 { position: absolute; left: 1007px; top: 560px; }
+
+    .popup-container {
+      position: absolute;
+      display: none; /* 기본 숨김 */
+    }
+
+    #popup-1 { }
+    #popup-2 { left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 20000; }
+    #popup-3 { }
+    #popup-4 { }
+    #popup-5 { }
+    #popup-6 { }
+
+    /* ───────────────────────────────
+       문제 컨테이너 (20개)
+    ─────────────────────────────── */
+    .question-container {
+      position: absolute;
+      display: none; /* 기본 숨김 */
+    }
+
+    #question-1  { }
+    #question-2  { }
+    #question-3  { }
+    #question-4  { }
+    #question-5  { }
+    #question-6  { }
+    #question-7  { }
+    #question-8  { }
+    #question-9  { }
+    #question-10 { }
+    #question-11 { }
+    #question-12 { }
+    #question-13 { }
+    #question-14 { }
+    #question-15 { }
+    #question-16 { }
+    #question-17 { }
+    #question-18 { }
+    #question-19 { }
+    #question-20 { }
+  </style>
+</head>
+<body>
+  <div id="app">
+
+    <!-- ═══════════════════════════════
+         캐릭터 그룹
+    ═══════════════════════════════ -->
+    <div id="char-group">
+      <img id="char-1"    src="images/char-1.png"    alt="char">
+      <img id="char-blur" src="images/char-blur.png" alt="char-blur">
+    </div>
+    <div id="char-group2">
+      <img id="char-2"     src="images/char-2.png"    alt="char2">
+      <img id="char-blur2" src="images/char-blur.png" alt="char-blur2">
+    </div>
+
+    <!-- ═══════════════════════════════
+         버튼
+    ═══════════════════════════════ -->
+    <img id="btn-how"   class="btn" src="images/btn-how.png"   alt="btn-how">
+    <div id="pop-1-wrapper">
+      <img id="pop-1" src="images/pop-1.png" alt="pop-1">
+      <div id="pop-1-close"></div>
+    </div>
+    <img id="btn-start" class="btn" src="images/btn-start_10.png" alt="btn-start">
+    <img id="btn-dice"  class="btn" src="images/btn-dice.png"  alt="btn-dice">
+    <button id="btn-restart">다시하기</button>
+    <!-- ═══════════════════════════════
+         박스 버튼 그룹
+    ═══════════════════════════════ -->
+    <div id="btn-box-group">
+      <div id="btn-box-correct-group" class="btn-box-toggle">
+        <img id="btn-box-correct"   src="images/btn-boxCorrect.png"   alt="btn-boxCorrect">
+        <img id="btn-box-correct-2" src="images/btn-boxCorrect-2.png" alt="btn-boxCorrect-2" class="hidden">
+      </div>
+      <div id="btn-box-wrong-group" class="btn-box-toggle">
+        <img id="btn-box-wrong"   src="images/btn-boxWrong.png"   alt="btn-boxWrong">
+        <img id="btn-box-wrong-2" src="images/btn-boxWrong-2.png" alt="btn-boxWrong-2" class="hidden">
+      </div>
+    </div>
+    <div id="btn-box2-group">
+      <div id="btn-box2-correct-group" class="btn-box-toggle">
+        <img id="btn-box2-correct"   src="images/btn-oxCorrect.png"   alt="btn-oxCorrect">
+        <img id="btn-box2-correct-2" src="images/btn-oxCorrect2.png"  alt="btn-oxCorrect2" class="hidden">
+      </div>
+      <div id="btn-box2-wrong-group" class="btn-box-toggle">
+        <img id="btn-box2-wrong"   src="images/btn-oxWrong.png"   alt="btn-oxWrong">
+        <img id="btn-box2-wrong-2" src="images/btn-oxWrong2.png"  alt="btn-oxWrong2" class="hidden">
+      </div>
+    </div>
+
+    <button id="btn-test-step">+1칸</button>
+    <button id="btn-test-goal">goal</button>
+    <button id="btn-test-room">test_room</button>
+    <div id="dice-sprite-1" class="dice-sprite"></div>
+    <div id="dice-sprite-2" class="dice-sprite"></div>
+    <div id="dice-sprite-3" class="dice-sprite"></div>
+    <div id="dice-sprite-4" class="dice-sprite"></div>
+    <div id="dice-sprite-5" class="dice-sprite"></div>
+    <div id="dice-sprite-6" class="dice-sprite"></div>
+
+    <!-- ═══════════════════════════════
+         슬라이드 컨테이너
+    ═══════════════════════════════ -->
+    <div id="slide-container">
+      <img id="slide-img" src="" alt="slide">
+      <button id="slide-close"></button>
+      <div id="slide-3-content">
+        <div id="box-g-3"></div>
+        <img id="btn-question" src="images/btn-question.png" alt="btn-question">
+      </div>
+      <div id="slide-11-content">
+        <div id="box-g-11"></div>
+        <img id="btn-question-11" class="btn" src="images/btn-question.png" alt="btn-question-11">
+      </div>
+      <div id="slide-7-content">
+        <div id="box-g-7"></div>
+        <img id="btn-question-7" class="btn" src="images/btn-question.png" alt="btn-question-7">
+      </div>
+      <div id="slide-5-content">
+        <div id="box-g-5"></div>
+        <img id="btn-sample-5" class="btn" src="images/btn-sample.png" alt="btn-sample-5">
+      </div>
+      <div id="slide-1-content">
+        <div id="box-g"></div>
+        <img id="btn-sample" class="btn" src="images/btn-sample.png" alt="btn-sample">
+      </div>
+      <div id="slide-8-content">
+        <div id="box-g-8"></div>
+        <img id="btn-sample-8" class="btn" src="images/btn-sample.png" alt="btn-sample-8">
+      </div>
+      <div id="slide-12-content">
+        <div id="box-g-12"></div>
+        <img id="btn-question-12" class="btn" src="images/btn-question.png" alt="btn-question-12">
+      </div>
+      <div id="slide-13-content">
+        <div id="box-g-13"></div>
+        <img id="btn-sample-13" class="btn" src="images/btn-sample.png" alt="btn-sample-13">
+      </div>
+      <div id="slide-15-content">
+        <div id="box-g-15"></div>
+        <img id="btn-sample-15" class="btn" src="images/btn-sample.png" alt="btn-sample-15">
+      </div>
+      <div id="slide-16-content">
+        <div id="box-g-16"></div>
+        <img id="btn-question-16" class="btn" src="images/btn-question.png" alt="btn-question-16">
+      </div>
+      <div id="slide-18-content">
+        <div id="box-g-18"></div>
+        <img id="btn-question-18" class="btn" src="images/btn-question.png" alt="btn-question-18">
+      </div>
+      <div id="slide-19-content">
+        <div id="box-g-19"></div>
+        <img id="btn-sample-19" class="btn" src="images/btn-sample.png" alt="btn-sample-19">
+      </div>
+      <div id="slide-21-content">
+        <div id="box-g-21"></div>
+        <img id="btn-sample-21" class="btn" src="images/btn-sample.png" alt="btn-sample-21">
+      </div>
+      <div id="slide-22-content">
+        <div id="box-g-22"></div>
+        <img id="btn-sample-22" class="btn" src="images/btn-sample.png" alt="btn-sample-22">
+      </div>
+      <div id="slide-20-content">
+        <div id="box-g-20"></div>
+        <img id="btn-sample-20" class="btn" src="images/btn-sample.png" alt="btn-sample-20">
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════
+         방 컨테이너 (25개)
+    ═══════════════════════════════ -->
+    <div id="room-1"  class="room"></div>
+    <div id="room-2"  class="room"></div>
+    <div id="room-3"  class="room"></div>
+    <div id="room-4"  class="room"></div>
+    <div id="room-5"  class="room"></div>
+    <div id="room-6"  class="room"></div>
+    <div id="room-7"  class="room"></div>
+    <div id="room-8"  class="room"></div>
+    <div id="room-9"  class="room"></div>
+    <div id="room-10" class="room"></div>
+    <div id="room-11" class="room"></div>
+    <div id="room-12" class="room"></div>
+    <div id="room-13" class="room"></div>
+    <div id="room-14" class="room"></div>
+    <div id="room-15" class="room"></div>
+    <div id="room-16" class="room"></div>
+    <div id="room-17" class="room"></div>
+    <div id="room-18" class="room"></div>
+    <div id="room-19" class="room"></div>
+    <div id="room-20" class="room"></div>
+    <div id="room-21" class="room"></div>
+    <div id="room-22" class="room"></div>
+    <div id="room-23" class="room"></div>
+    <div id="room-24" class="room"></div>
+    <div id="room-25" class="room"></div>
+
+    <!-- ═══════════════════════════════
+         팝업 컨테이너 (6개)
+    ═══════════════════════════════ -->
+    <div id="popup-1"  class="popup-container"></div>
+    <div id="popup-2"  class="popup-container"><img src="images/pop-2.png" alt="pop-2"></div>
+    <div id="popup-3"  class="popup-container"></div>
+    <div id="popup-4"  class="popup-container"></div>
+    <div id="popup-5"  class="popup-container"></div>
+    <div id="popup-6"  class="popup-container"></div>
+    <div id="popup-7">
+      <img class="pop-img" src="images/pop-7.png" alt="pop-7">
+      <img id="btn-select1" class="btn" src="images/btn-select1.png" alt="btn-select1">
+      <img id="btn-select2" class="btn" src="images/btn-select2.png" alt="btn-select2">
+    </div>
+
+    <!-- ═══════════════════════════════
+         문제 컨테이너 (20개)
+    ═══════════════════════════════ -->
+    <div id="question-1"  class="question-container"></div>
+    <div id="question-2"  class="question-container"></div>
+    <div id="question-3"  class="question-container"></div>
+    <div id="question-4"  class="question-container"></div>
+    <div id="question-5"  class="question-container"></div>
+    <div id="question-6"  class="question-container"></div>
+    <div id="question-7"  class="question-container"></div>
+    <div id="question-8"  class="question-container"></div>
+    <div id="question-9"  class="question-container"></div>
+    <div id="question-10" class="question-container"></div>
+    <div id="question-11" class="question-container"></div>
+    <div id="question-12" class="question-container"></div>
+    <div id="question-13" class="question-container"></div>
+    <div id="question-14" class="question-container"></div>
+    <div id="question-15" class="question-container"></div>
+    <div id="question-16" class="question-container"></div>
+    <div id="question-17" class="question-container"></div>
+    <div id="question-18" class="question-container"></div>
+    <div id="question-19" class="question-container"></div>
+    <div id="question-20" class="question-container"></div>
+
+  </div>
+
+  <script>
+    function scaleApp() {
+      const app = document.getElementById('app');
+      const scaleX = window.innerWidth / 1920;
+      const scaleY = window.innerHeight / 1020;
+      const scale = Math.min(scaleX, scaleY);
+      app.style.transform = `scale(${scale})`;
+    }
+
+    scaleApp();
+    window.addEventListener('resize', scaleApp);
+
+    let diceTimer = null;
+    let spriteTimer1 = null;
+    let spriteTimer2 = null;
+    let spriteTimer3 = null;
+
+    var diceSound = new Audio('mp3/dice.mp3');
+    var finishSound = new Audio('mp3/finish.mp3');
+    var clickSound = new Audio('mp3/click.mp3');
+
+    document.addEventListener('mouseup', function (e) {
+      var target = e.target;
+      if (
+        target.tagName === 'BUTTON' ||
+        target.classList.contains('btn') ||
+        target.classList.contains('btn-box-toggle') ||
+        target.closest('.btn-box-toggle')
+      ) {
+        setTimeout(function () { clickSound.cloneNode().play(); }, 100);
+      }
+    });
+
+    function playDice(spriteId) {
+      setTimeout(function () {
+        diceSound.currentTime = 0;
+        diceSound.play();
+      }, 1000);
+      const sprite = document.getElementById(spriteId);
+      const popup2 = document.getElementById('popup-2');
+
+      // 기존 타이머 초기화 및 모든 스프라이트 숨김
+      clearTimeout(spriteTimer1);
+      clearTimeout(spriteTimer2);
+      clearTimeout(spriteTimer3);
+      document.querySelectorAll('.dice-sprite').forEach(function (el) {
+        el.classList.remove('playing');
+        el.style.backgroundPosition = '0 0';
+        el.style.display = 'none';
+      });
+
+      sprite.style.display = 'block';
+
+      // [0s] 첫 프레임 표시 → [0.5s] 애니메이션 시작
+      spriteTimer1 = setTimeout(function () {
+        void sprite.offsetWidth;
+        sprite.classList.add('playing');
+      }, 500);
+
+      // [0.5s + 2s = 2.5s] 애니메이션 종료 → 마지막 프레임 고정
+      spriteTimer2 = setTimeout(function () {
+        sprite.classList.remove('playing');
+        sprite.style.backgroundPosition = '-6783px 0'; /* 323 * 21 = 마지막 프레임 */
+      }, 2500);
+
+      // [2.5s + 1.5s = 4s] 마지막 프레임 유지 후 숨김
+      spriteTimer3 = setTimeout(function () {
+        sprite.style.display = 'none';
+        sprite.style.backgroundPosition = '0 0';
+      }, 4000);
+
+      // 팝업 4초 노출
+      popup2.style.display = 'block';
+      clearTimeout(diceTimer);
+      diceTimer = setTimeout(function () {
+        popup2.style.display = 'none';
+      }, 4000);
+    }
+
+    document.getElementById('btn-start').addEventListener('click', function () {
+      this.style.display = 'none';
+      document.getElementById('popup-7').style.display = 'block';
+    });
+
+    var orderSelected = false;
+    var selectedCharGroup = null;  // 최초 선택 캐릭터
+    var currentTurn = null;        // 현재 차례 캐릭터
+    var isTurnBusy = false;        // 이동 중 중복 방지
+
+    // 캐릭터별 현재 방 위치 (0 = 시작)
+    var charCurrentRoom = { 'char-group': 0, 'char-group2': 0 };
+
+    function getOtherChar(charGroup) {
+      return charGroup === 'char-group' ? 'char-group2' : 'char-group';
+    }
+
+    // 같은 방 공유 시 좌우 배치, 아니면 중앙 복귀
+    function adjustSameRoom() {
+      var r1 = charCurrentRoom['char-group'];
+      var r2 = charCurrentRoom['char-group2'];
+      var el1 = document.getElementById('char-group');
+      var el2 = document.getElementById('char-group2');
+
+      if (r1 > 0 && r1 === r2) {
+        // 같은 방 - char-2 왼쪽, char-1 오른쪽, -100px 간격(겹침)
+        var room = document.getElementById('room-' + r1);
+        el2.style.left = room.offsetLeft + 'px';        /* 왼쪽 */
+        el1.style.left = (room.offsetLeft + 60) + 'px'; /* 60px 겹침 */
+      } else {
+        // 각자 방 - 중앙 복귀
+        if (r1 > 0) {
+          var room1 = document.getElementById('room-' + r1);
+          el1.style.left = room1.offsetLeft + 'px';
+        }
+        if (r2 > 0) {
+          var room2 = document.getElementById('room-' + r2);
+          el2.style.left = room2.offsetLeft + 'px';
+        }
+      }
+    }
+
+    function endGame() {
+      document.getElementById('btn-restart').style.display = 'block';
+    }
+
+    function resetGame() {
+      // 타이머 전체 초기화
+      clearTimeout(diceTimer);
+      clearTimeout(spriteTimer1);
+      clearTimeout(spriteTimer2);
+      clearTimeout(spriteTimer3);
+
+      // 상태 초기화
+      orderSelected     = false;
+      selectedCharGroup = null;
+      currentTurn       = null;
+      isTurnBusy        = false;
+      charCurrentRoom   = { 'char-group': 0, 'char-group2': 0 };
+
+      // 캐릭터 transition 끄고 즉시 원위치
+      var cg1 = document.getElementById('char-group');
+      var cg2 = document.getElementById('char-group2');
+      cg1.style.transition = 'none';
+      cg2.style.transition = 'none';
+      cg1.style.left = '130px'; cg1.style.top = '141px';
+      cg2.style.left = '7px';   cg2.style.top = '141px';
+      // transition 복구 (다음 프레임)
+      requestAnimationFrame(function () {
+        cg1.style.transition = '';
+        cg2.style.transition = '';
+      });
+
+      // blur 초기화
+      document.getElementById('char-blur').classList.remove('active');
+      document.getElementById('char-blur2').classList.remove('active');
+
+      // UI 초기화
+      document.getElementById('btn-start').style.display   = 'block';
+      document.getElementById('btn-restart').style.display = 'none';
+      document.getElementById('popup-7').style.display     = 'none';
+      document.getElementById('popup-2').style.display     = 'none';
+      document.getElementById('slide-container').style.display = 'none';
+
+      // 주사위 스프라이트 초기화
+      document.querySelectorAll('.dice-sprite').forEach(function (el) {
+        el.classList.remove('playing');
+        el.style.backgroundPosition = '0 0';
+        el.style.display = 'none';
+      });
+    }
+
+    document.getElementById('btn-restart').addEventListener('click', resetGame);
+
+    // 박스 버튼 토글
+    // 1번 누르면 → 2번 토글, 1번 복귀
+    // 2번 누르면 → 1번 토글, 2번 복귀 (반복)
+    function setBoxCorrect(toggled) {
+      document.getElementById('btn-box-correct').classList.toggle('hidden', toggled);
+      document.getElementById('btn-box-correct-2').classList.toggle('hidden', !toggled);
+    }
+
+    function setBoxWrong(toggled) {
+      document.getElementById('btn-box-wrong').classList.toggle('hidden', toggled);
+      document.getElementById('btn-box-wrong-2').classList.toggle('hidden', !toggled);
+    }
+
+    document.getElementById('btn-box-correct-group').addEventListener('click', function () {
+      setBoxCorrect(false);
+      setBoxWrong(true);
+    });
+
+    document.getElementById('btn-box-wrong-group').addEventListener('click', function () {
+      setBoxWrong(false);
+      setBoxCorrect(true);
+    });
+
+    // btn-box2-group 토글
+    function setBox2Correct(toggled) {
+      document.getElementById('btn-box2-correct').classList.toggle('hidden', toggled);
+      document.getElementById('btn-box2-correct-2').classList.toggle('hidden', !toggled);
+    }
+
+    function setBox2Wrong(toggled) {
+      document.getElementById('btn-box2-wrong').classList.toggle('hidden', toggled);
+      document.getElementById('btn-box2-wrong-2').classList.toggle('hidden', !toggled);
+    }
+
+    document.getElementById('btn-box2-correct-group').addEventListener('click', function () {
+      setBox2Correct(false);
+      setBox2Wrong(true);
+    });
+
+    document.getElementById('btn-box2-wrong-group').addEventListener('click', function () {
+      setBox2Wrong(false);
+      setBox2Correct(true);
+    });
+
+    document.getElementById('btn-test-step').addEventListener('click', function () {
+      if (!currentTurn || isTurnBusy) return;
+      isTurnBusy = true;
+      moveCharacter(1);
+    });
+
+    document.getElementById('btn-test-goal').addEventListener('click', function () {
+      var targetRoom = 24;
+      var room = document.getElementById('room-' + targetRoom);
+      if (!room) return;
+      var el1 = document.getElementById('char-group');
+      var el2 = document.getElementById('char-group2');
+      charCurrentRoom['char-group']  = targetRoom;
+      charCurrentRoom['char-group2'] = targetRoom;
+      el2.style.left = room.offsetLeft + 'px';
+      el2.style.top  = room.offsetTop + 'px';
+      el1.style.left = (room.offsetLeft + 60) + 'px';
+      el1.style.top  = room.offsetTop + 'px';
+    });
+
+    document.getElementById('btn-test-room').addEventListener('click', function () {
+      var targetRoom = 11;
+      var room = document.getElementById('room-' + targetRoom);
+      if (!room) return;
+
+      var el1 = document.getElementById('char-group');
+      var el2 = document.getElementById('char-group2');
+
+      charCurrentRoom['char-group']  = targetRoom;
+      charCurrentRoom['char-group2'] = targetRoom;
+
+      // 같은 방 - char-2 왼쪽, char-1 오른쪽 -100px 간격
+      el2.style.left = room.offsetLeft + 'px';
+      el2.style.top  = room.offsetTop + 'px';
+      el1.style.left = (room.offsetLeft + 60) + 'px';
+      el1.style.top  = room.offsetTop + 'px';
+    });
+
+    document.getElementById('slide-close').addEventListener('click', function () {
+      document.getElementById('slide-container').style.display = 'none';
+      document.getElementById('btn-box-group').style.display = 'none';
+      document.getElementById('btn-box2-group').style.display = 'none';
+      document.getElementById('btn-question').style.display = 'none';
+      document.getElementById('slide-3-content').style.display = 'none';
+      document.getElementById('box-g-3').style.opacity = '1';
+      document.getElementById('slide-11-content').style.display = 'none';
+      document.getElementById('box-g-11').style.opacity = '1';
+      document.getElementById('btn-question-11').style.display = 'block';
+      document.getElementById('slide-1-content').style.display = 'none';
+      document.getElementById('box-g').style.opacity = '1';
+      document.getElementById('btn-sample').style.display = 'block';
+      document.getElementById('slide-5-content').style.display = 'none';
+      document.getElementById('box-g-5').style.opacity = '1';
+      document.getElementById('btn-sample-5').style.display = 'block';
+      document.getElementById('slide-7-content').style.display = 'none';
+      document.getElementById('box-g-7').style.opacity = '1';
+      document.getElementById('btn-question-7').style.display = 'block';
+      document.getElementById('slide-8-content').style.display = 'none';
+      document.getElementById('box-g-8').style.opacity = '1';
+      document.getElementById('btn-sample-8').style.display = 'block';
+      document.getElementById('slide-12-content').style.display = 'none';
+      document.getElementById('box-g-12').style.opacity = '1';
+      document.getElementById('btn-question-12').style.display = 'block';
+      document.getElementById('slide-13-content').style.display = 'none';
+      document.getElementById('box-g-13').style.opacity = '1';
+      document.getElementById('btn-sample-13').style.display = 'block';
+      document.getElementById('slide-15-content').style.display = 'none';
+      document.getElementById('box-g-15').style.opacity = '1';
+      document.getElementById('btn-sample-15').style.display = 'block';
+      document.getElementById('slide-16-content').style.display = 'none';
+      document.getElementById('box-g-16').style.opacity = '1';
+      document.getElementById('btn-question-16').style.display = 'block';
+      document.getElementById('slide-18-content').style.display = 'none';
+      document.getElementById('box-g-18').style.opacity = '1';
+      document.getElementById('btn-question-18').style.display = 'block';
+      document.getElementById('slide-19-content').style.display = 'none';
+      document.getElementById('box-g-19').style.opacity = '1';
+      document.getElementById('btn-sample-19').style.display = 'block';
+      document.getElementById('slide-21-content').style.display = 'none';
+      document.getElementById('box-g-21').style.opacity = '1';
+      document.getElementById('btn-sample-21').style.display = 'block';
+      document.getElementById('slide-22-content').style.display = 'none';
+      document.getElementById('box-g-22').style.opacity = '1';
+      document.getElementById('btn-sample-22').style.display = 'block';
+      document.getElementById('slide-20-content').style.display = 'none';
+      document.getElementById('box-g-20').style.opacity = '1';
+      document.getElementById('btn-sample-20').style.display = 'block';
+      // btn-box-group 리셋
+      setBoxCorrect(false);
+      setBoxWrong(false);
+      document.getElementById('btn-box-group').classList.remove('box-disabled');
+
+      // btn-box2-group 리셋
+      setBox2Correct(false);
+      setBox2Wrong(false);
+      document.getElementById('btn-box2-group').classList.remove('box-disabled');
+
+      // pop-1 닫기
+      document.getElementById('pop-1-wrapper').style.display = 'none';
+    });
+
+    document.getElementById('btn-how').addEventListener('click', function () {
+      document.getElementById('pop-1-wrapper').style.display = 'block';
+    });
+
+    document.getElementById('pop-1-close').addEventListener('click', function () {
+      document.getElementById('pop-1-wrapper').style.display = 'none';
+    });
+
+
+    var boxGroupSlides    = [1,3,5,7,8,11,12,13,15,19,20,22];
+    var box2GroupSlides   = [2,4,9,14,17,18,23,24];
+
+    var roomToSlide = {};
+
+    function showSlide(roomNum) {
+      var slideNum = roomToSlide[roomNum] !== undefined ? roomToSlide[roomNum] : roomNum;
+      var src = 'images/slide-' + slideNum + '.png';
+      var container = document.getElementById('slide-container');
+      var img = document.getElementById('slide-img');
+      img.src = src;
+      container.style.display = 'block';
+
+      // btn-box-group 노출 여부
+      var boxGroup = document.getElementById('btn-box-group');
+      boxGroup.style.display = boxGroupSlides.indexOf(roomNum) !== -1 ? 'flex' : 'none';
+
+      // box-g가 있는 슬라이드는 box-g 사라질 때까지 비활성화
+      var boxGSlides = [1, 3, 5, 7, 8, 11, 12, 13, 15, 16, 18, 19, 20, 21, 22];
+      if (boxGSlides.indexOf(roomNum) !== -1) {
+        boxGroup.classList.add('box-disabled');
+      } else {
+        boxGroup.classList.remove('box-disabled');
+      }
+
+      // btn-box2-group 노출 여부
+      var box2Group = document.getElementById('btn-box2-group');
+      box2Group.style.display = box2GroupSlides.indexOf(roomNum) !== -1 ? 'flex' : 'none';
+
+      // slide-11 전용 요소 노출 여부
+      var slide11Content = document.getElementById('slide-11-content');
+      if (roomNum === 11) {
+        slide11Content.style.display = 'block';
+        document.getElementById('box-g-11').style.opacity = '1';
+      } else {
+        slide11Content.style.display = 'none';
+      }
+
+      // slide-3 전용 요소 노출 여부
+      var slide3Content = document.getElementById('slide-3-content');
+      if (roomNum === 3) {
+        slide3Content.style.display = 'block';
+        document.getElementById('box-g-3').style.opacity = '1';
+        document.getElementById('btn-question').style.display = 'block';
+      } else {
+        slide3Content.style.display = 'none';
+        document.getElementById('btn-question').style.display = 'none';
+      }
+
+      // slide-1 전용 요소 노출 여부
+      var slide1Content = document.getElementById('slide-1-content');
+      if (roomNum === 1) {
+        slide1Content.style.display = 'block';
+        document.getElementById('box-g').style.opacity = '1';
+      } else {
+        slide1Content.style.display = 'none';
+      }
+
+      // slide-5 전용 요소 노출 여부
+      var slide5Content = document.getElementById('slide-5-content');
+      if (roomNum === 5) {
+        slide5Content.style.display = 'block';
+        document.getElementById('box-g-5').style.opacity = '1';
+      } else {
+        slide5Content.style.display = 'none';
+      }
+
+      // slide-7 전용 요소 노출 여부
+      var slide7Content = document.getElementById('slide-7-content');
+      if (roomNum === 7) {
+        slide7Content.style.display = 'block';
+        document.getElementById('box-g-7').style.opacity = '1';
+      } else {
+        slide7Content.style.display = 'none';
+      }
+
+      // slide-8 전용 요소 노출 여부
+      var slide8Content = document.getElementById('slide-8-content');
+      if (roomNum === 8) {
+        slide8Content.style.display = 'block';
+        document.getElementById('box-g-8').style.opacity = '1';
+      } else {
+        slide8Content.style.display = 'none';
+      }
+
+      // slide-12 전용 요소 노출 여부
+      var slide12Content = document.getElementById('slide-12-content');
+      if (roomNum === 12) {
+        slide12Content.style.display = 'block';
+        document.getElementById('box-g-12').style.opacity = '1';
+      } else {
+        slide12Content.style.display = 'none';
+      }
+
+      // slide-13 전용 요소 노출 여부
+      var slide13Content = document.getElementById('slide-13-content');
+      if (roomNum === 13) {
+        slide13Content.style.display = 'block';
+        document.getElementById('box-g-13').style.opacity = '1';
+      } else {
+        slide13Content.style.display = 'none';
+      }
+
+      // slide-15 전용 요소 노출 여부
+      var slide15Content = document.getElementById('slide-15-content');
+      if (roomNum === 15) {
+        slide15Content.style.display = 'block';
+        document.getElementById('box-g-15').style.opacity = '1';
+      } else {
+        slide15Content.style.display = 'none';
+      }
+
+      // slide-16 전용 요소 노출 여부
+      var slide16Content = document.getElementById('slide-16-content');
+      if (slideNum === 16) {
+        slide16Content.style.display = 'block';
+        document.getElementById('box-g-16').style.opacity = '1';
+      } else {
+        slide16Content.style.display = 'none';
+      }
+
+      // slide-18 전용 요소 노출 여부
+      var slide18Content = document.getElementById('slide-18-content');
+      if (roomNum === 18) {
+        slide18Content.style.display = 'block';
+        document.getElementById('box-g-18').style.opacity = '1';
+      } else {
+        slide18Content.style.display = 'none';
+      }
+
+      // slide-19 전용 요소 노출 여부
+      var slide19Content = document.getElementById('slide-19-content');
+      if (roomNum === 19) {
+        slide19Content.style.display = 'block';
+        document.getElementById('box-g-19').style.opacity = '1';
+      } else {
+        slide19Content.style.display = 'none';
+      }
+
+      // slide-21 전용 요소 노출 여부
+      var slide21Content = document.getElementById('slide-21-content');
+      if (roomNum === 21) {
+        slide21Content.style.display = 'block';
+        document.getElementById('box-g-21').style.opacity = '1';
+      } else {
+        slide21Content.style.display = 'none';
+      }
+
+      // slide-20 전용 요소 노출 여부
+      var slide20Content = document.getElementById('slide-20-content');
+      if (roomNum === 20) {
+        slide20Content.style.display = 'block';
+        document.getElementById('box-g-20').style.opacity = '1';
+      } else {
+        slide20Content.style.display = 'none';
+      }
+
+      // slide-22 전용 요소 노출 여부
+      var slide22Content = document.getElementById('slide-22-content');
+      if (roomNum === 22) {
+        slide22Content.style.display = 'block';
+        document.getElementById('box-g-22').style.opacity = '1';
+      } else {
+        slide22Content.style.display = 'none';
+      }
+
+      // slide 6, 10, 16, 21: 2초 후 자동 닫힘
+      if ([6, 10, 16, 21].indexOf(roomNum) !== -1) {
+        setTimeout(function () {
+          document.getElementById('slide-close').click();
+        }, 2000);
+      }
+
+      // slide-16 특이사항: 도착 후 앞으로 2칸 추가 이동
+      if (roomNum === 16) {
+        var charAt16 = (function () {
+          for (var id in charCurrentRoom) {
+            if (charCurrentRoom[id] === 16) return id;
+          }
+          return null;
+        })();
+        if (charAt16) {
+          setTimeout(function () {
+            forceMoveCharacter(charAt16, 2);
+          }, 3500); // 슬라이드 닫힘(2초) + 여유 1.5초
+        }
+      }
+    }
+
+    function forceMoveCharacter(charId, steps) {
+      var current = charCurrentRoom[charId];
+      var target  = current + steps;
+      if (target > 25) target = 25;
+
+      var charEl = document.getElementById(charId);
+      var step   = current;
+
+      function moveStep() {
+        step++;
+        var room = document.getElementById('room-' + step);
+        if (!room) return;
+        charEl.style.left = room.offsetLeft + 'px';
+        charEl.style.top  = room.offsetTop  + 'px';
+        if (step < target) {
+          setTimeout(moveStep, 714);
+        } else {
+          charCurrentRoom[charId] = target;
+          adjustSameRoom();
+          if (target >= 25) {
+            finishSound.play();
+            var blurId = (charId === 'char-group') ? 'char-blur' : 'char-blur2';
+            setTimeout(function () {
+              document.getElementById(blurId).classList.add('active');
+            }, 500);
+            setTimeout(function () { endGame(); }, 1000);
+          } else {
+            setTimeout(function () { showSlide(target); }, 1000);
+          }
+        }
+      }
+      moveStep();
+    }
+
+    function enableBoxGroup() {
+      document.getElementById('btn-box-group').classList.remove('box-disabled');
+    }
+
+    document.getElementById('btn-question').addEventListener('click', function () {
+      this.style.display = 'none';
+      document.getElementById('box-g-3').style.opacity = '0';
+      enableBoxGroup();
+    });
+
+    document.getElementById('btn-sample').addEventListener('click', function () {
+      this.style.display = 'none';
+      var box = document.getElementById('box-g');
+      box.style.opacity = box.style.opacity === '0' ? '1' : '0';
+      enableBoxGroup();
+    });
+
+    document.getElementById('btn-sample-5').addEventListener('click', function () {
+      this.style.display = 'none';
+      var box = document.getElementById('box-g-5');
+      box.style.opacity = box.style.opacity === '0' ? '1' : '0';
+      enableBoxGroup();
+    });
+
+    document.getElementById('btn-question-7').addEventListener('click', function () {
+      this.style.display = 'none';
+      var box = document.getElementById('box-g-7');
+      box.style.opacity = box.style.opacity === '0' ? '1' : '0';
+      enableBoxGroup();
+    });
+
+    document.getElementById('btn-sample-8').addEventListener('click', function () {
+      this.style.display = 'none';
+      var box = document.getElementById('box-g-8');
+      box.style.opacity = box.style.opacity === '0' ? '1' : '0';
+      enableBoxGroup();
+    });
+
+    document.getElementById('btn-question-11').addEventListener('click', function () {
+      this.style.display = 'none';
+      var box = document.getElementById('box-g-11');
+      box.style.opacity = '0';
+      enableBoxGroup();
+    });
+
+    document.getElementById('btn-question-12').addEventListener('click', function () {
+      this.style.display = 'none';
+      var box = document.getElementById('box-g-12');
+      box.style.opacity = box.style.opacity === '0' ? '1' : '0';
+      enableBoxGroup();
+    });
+
+    document.getElementById('btn-sample-13').addEventListener('click', function () {
+      this.style.display = 'none';
+      var box = document.getElementById('box-g-13');
+      box.style.opacity = box.style.opacity === '0' ? '1' : '0';
+      enableBoxGroup();
+    });
+
+    document.getElementById('btn-sample-15').addEventListener('click', function () {
+      this.style.display = 'none';
+      var box = document.getElementById('box-g-15');
+      box.style.opacity = box.style.opacity === '0' ? '1' : '0';
+      enableBoxGroup();
+    });
+
+    document.getElementById('btn-question-16').addEventListener('click', function () {
+      this.style.display = 'none';
+      var box = document.getElementById('box-g-16');
+      box.style.opacity = box.style.opacity === '0' ? '1' : '0';
+      enableBoxGroup();
+    });
+
+    document.getElementById('btn-question-18').addEventListener('click', function () {
+      this.style.display = 'none';
+      var box = document.getElementById('box-g-18');
+      box.style.opacity = box.style.opacity === '0' ? '1' : '0';
+      enableBoxGroup();
+    });
+
+    document.getElementById('btn-sample-19').addEventListener('click', function () {
+      this.style.display = 'none';
+      var box = document.getElementById('box-g-19');
+      box.style.opacity = box.style.opacity === '0' ? '1' : '0';
+      enableBoxGroup();
+    });
+
+    document.getElementById('btn-sample-21').addEventListener('click', function () {
+      this.style.display = 'none';
+      var box = document.getElementById('box-g-21');
+      box.style.opacity = box.style.opacity === '0' ? '1' : '0';
+      enableBoxGroup();
+    });
+
+    document.getElementById('btn-sample-22').addEventListener('click', function () {
+      this.style.display = 'none';
+      var box = document.getElementById('box-g-22');
+      box.style.opacity = box.style.opacity === '0' ? '1' : '0';
+      enableBoxGroup();
+    });
+
+    document.getElementById('btn-sample-20').addEventListener('click', function () {
+      this.style.display = 'none';
+      var box = document.getElementById('box-g-20');
+      box.style.opacity = box.style.opacity === '0' ? '1' : '0';
+      enableBoxGroup();
+    });
+
+    function moveCharacter(result) {
+      if (!currentTurn) return;
+
+      var moving = currentTurn;
+      var current = charCurrentRoom[moving];
+      var target = current + result;
+      if (target > 25) target = 25;
+
+      var charEl = document.getElementById(moving);
+      var step = current;
+
+      function moveStep() {
+        step++;
+        var room = document.getElementById('room-' + step);
+        if (!room) return;
+
+        charEl.style.left = room.offsetLeft + 'px';
+        charEl.style.top  = room.offsetTop  + 'px';
+
+        if (step < target) {
+          setTimeout(moveStep, 714);
+        } else {
+          // 최종 도착
+          charCurrentRoom[moving] = target;
+
+          // 같은 방 위치 조정
+          adjustSameRoom();
+
+          if (target >= 25) {
+            // 게임 종료 - 0.5초 후 도착 캐릭터 토글(blurPulse)
+            isTurnBusy = false;
+            finishSound.play();
+            var blurId = (moving === 'char-group') ? 'char-blur' : 'char-blur2';
+            setTimeout(function () {
+              document.getElementById(blurId).classList.add('active');
+            }, 500);
+            setTimeout(function () { endGame(); }, 1000);
+          } else {
+            // 차례 전환
+            currentTurn = getOtherChar(moving);
+            isTurnBusy = false;
+            // 1초 후 슬라이드 노출
+            setTimeout(function () { showSlide(target); }, 1000);
+          }
+        }
+      }
+
+      moveStep();
+    }
+
+    document.getElementById('btn-dice').addEventListener('click', function () {
+      if (!orderSelected || isTurnBusy) return;
+      isTurnBusy = true;
+      this.classList.remove('pulse');
+      var result = Math.ceil(Math.random() * 6);
+      playDice('dice-sprite-' + result);
+      setTimeout(function () { moveCharacter(result); }, 4500);
+    });
+
+    // btn-select1 → char-group(캐릭터1) 선택 → 첫 차례
+    document.getElementById('btn-select1').addEventListener('click', function () {
+      orderSelected = true;
+      selectedCharGroup = 'char-group';
+      currentTurn = 'char-group';
+      document.getElementById('popup-7').style.display = 'none';
+      document.getElementById('btn-dice').classList.add('pulse');
+    });
+
+    // btn-select2 → char-group2(캐릭터2) 선택 → 첫 차례
+    document.getElementById('btn-select2').addEventListener('click', function () {
+      orderSelected = true;
+      selectedCharGroup = 'char-group2';
+      currentTurn = 'char-group2';
+      document.getElementById('popup-7').style.display = 'none';
+      document.getElementById('btn-dice').classList.add('pulse');
+    });
+
+    document.querySelectorAll('.dice-sprite').forEach(function (el) {
+      el.addEventListener('click', function () {
+        if (orderSelected && !isTurnBusy) {
+          isTurnBusy = true;
+          var result = Math.ceil(Math.random() * 6);
+          playDice('dice-sprite-' + result);
+          setTimeout(function () { moveCharacter(result); }, 4500);
+        }
+      });
+    });
+  </script>
+</body>
+</html>
