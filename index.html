@@ -967,6 +967,11 @@
     let spriteTimer2 = null;
     let spriteTimer3 = null;
 
+    var bgm = new Audio('mp3/game_tp6_bgm.mp3');
+    bgm.loop = true;
+    bgm.volume = 0.7;
+    bgm.play();
+
     var diceSound = new Audio('mp3/dice.mp3');
     var finishSound = new Audio('mp3/finish.mp3');
     var clickSound = new Audio('mp3/click.mp3');
