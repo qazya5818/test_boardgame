@@ -566,13 +566,21 @@
 
     #box-g-19 {
       position: absolute;
-      left: 314px;
-      top: 522px;
-      width: 1267px;
+      left: 833px;
+      top: 521px;
+      width: 250px;
       height: 91px;
-      background-color: #DBDBDB;
+      background-color: #EDEDED;
       pointer-events: none;
       z-index: 0;
+    }
+
+    #btn-question-19 {
+      position: absolute;
+      left: 899px;
+      top: 503px;
+      cursor: pointer;
+      z-index: 1;
     }
 
     #btn-sample-19 {
@@ -619,10 +627,10 @@
     #box-g-22 {
       position: absolute;
       left: 314px;
-      top: 522px;
+      top: 521px;
       width: 1267px;
       height: 91px;
-      background-color: #DBDBDB;
+      background-color: #EDEDED;
       pointer-events: none;
       z-index: 0;
     }
@@ -680,6 +688,58 @@
     }
 
     #btn-question-11 {
+      position: absolute;
+      left: 899px;
+      top: 503px;
+      cursor: pointer;
+      z-index: 1;
+    }
+
+    /* ───────────────────────────────
+       slide-23 전용 요소
+    ─────────────────────────────── */
+    #slide-23-content {
+      display: none;
+    }
+
+    #box-g-23 {
+      position: absolute;
+      left: 314px;
+      top: 521px;
+      width: 1267px;
+      height: 91px;
+      background-color: #EDEDED;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #btn-sample-23 {
+      position: absolute;
+      left: 888px;
+      top: 526px;
+      cursor: pointer;
+      z-index: 1;
+    }
+
+    /* ───────────────────────────────
+       slide-17 전용 요소
+    ─────────────────────────────── */
+    #slide-17-content {
+      display: none;
+    }
+
+    #box-g-17 {
+      position: absolute;
+      left: 833px;
+      top: 521px;
+      width: 250px;
+      height: 91px;
+      background-color: #DBDBDB;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #btn-question-17 {
       position: absolute;
       left: 899px;
       top: 503px;
@@ -864,7 +924,7 @@
       </div>
       <div id="slide-19-content">
         <div id="box-g-19"></div>
-        <img id="btn-sample-19" class="btn" src="images/btn-sample.png" alt="btn-sample-19">
+        <img id="btn-question-19" class="btn" src="images/btn-question.png" alt="btn-question-19">
       </div>
       <div id="slide-21-content">
         <div id="box-g-21"></div>
@@ -877,6 +937,14 @@
       <div id="slide-20-content">
         <div id="box-g-20"></div>
         <img id="btn-sample-20" class="btn" src="images/btn-sample.png" alt="btn-sample-20">
+      </div>
+      <div id="slide-23-content">
+        <div id="box-g-23"></div>
+        <img id="btn-sample-23" class="btn" src="images/btn-sample.png" alt="btn-sample-23">
+      </div>
+      <div id="slide-17-content">
+        <div id="box-g-17"></div>
+        <img id="btn-question-17" class="btn" src="images/btn-question.png" alt="btn-question-17">
       </div>
     </div>
 
@@ -969,12 +1037,19 @@
 
     var bgm = new Audio('mp3/game_tp6_bgm.mp3');
     bgm.loop = true;
-    bgm.volume = 0.7;
-    bgm.play();
+    bgm.volume = 0.2;
+    bgm.playbackRate = 0.85;
+
+    document.addEventListener('click', function startBgm() {
+      bgm.play();
+      document.removeEventListener('click', startBgm);
+    });
 
     var diceSound = new Audio('mp3/dice.mp3');
     var finishSound = new Audio('mp3/finish.mp3');
     var clickSound = new Audio('mp3/click.mp3');
+    var wrongSound = new Audio('mp3/wrong_b.mp3');
+    wrongSound.volume = 0.5;
 
     document.addEventListener('mouseup', function (e) {
       var target = e.target;
@@ -1193,7 +1268,7 @@
     });
 
     document.getElementById('btn-test-room').addEventListener('click', function () {
-      var targetRoom = 11;
+      var targetRoom = 14;
       var room = document.getElementById('room-' + targetRoom);
       if (!room) return;
 
@@ -1244,12 +1319,15 @@
       document.getElementById('slide-16-content').style.display = 'none';
       document.getElementById('box-g-16').style.opacity = '1';
       document.getElementById('btn-question-16').style.display = 'block';
+      document.getElementById('slide-17-content').style.display = 'none';
+      document.getElementById('box-g-17').style.opacity = '1';
+      document.getElementById('btn-question-17').style.display = 'block';
       document.getElementById('slide-18-content').style.display = 'none';
       document.getElementById('box-g-18').style.opacity = '1';
       document.getElementById('btn-question-18').style.display = 'block';
       document.getElementById('slide-19-content').style.display = 'none';
       document.getElementById('box-g-19').style.opacity = '1';
-      document.getElementById('btn-sample-19').style.display = 'block';
+      document.getElementById('btn-question-19').style.display = 'block';
       document.getElementById('slide-21-content').style.display = 'none';
       document.getElementById('box-g-21').style.opacity = '1';
       document.getElementById('btn-sample-21').style.display = 'block';
@@ -1259,6 +1337,9 @@
       document.getElementById('slide-20-content').style.display = 'none';
       document.getElementById('box-g-20').style.opacity = '1';
       document.getElementById('btn-sample-20').style.display = 'block';
+      document.getElementById('slide-23-content').style.display = 'none';
+      document.getElementById('box-g-23').style.opacity = '1';
+      document.getElementById('btn-sample-23').style.display = 'block';
       // btn-box-group 리셋
       setBoxCorrect(false);
       setBoxWrong(false);
@@ -1282,8 +1363,8 @@
     });
 
 
-    var boxGroupSlides    = [1,3,5,7,8,11,12,13,15,19,20,22];
-    var box2GroupSlides   = [2,4,9,14,17,18,23,24];
+    var boxGroupSlides    = [1,3,5,7,8,11,12,13,15,17,19,20,22,23];
+    var box2GroupSlides   = [2,4,9,14,18,24];
 
     var roomToSlide = {};
 
@@ -1300,7 +1381,7 @@
       boxGroup.style.display = boxGroupSlides.indexOf(roomNum) !== -1 ? 'flex' : 'none';
 
       // box-g가 있는 슬라이드는 box-g 사라질 때까지 비활성화
-      var boxGSlides = [1, 3, 5, 7, 8, 11, 12, 13, 15, 16, 18, 19, 20, 21, 22];
+      var boxGSlides = [1, 3, 5, 7, 8, 11, 12, 13, 15, 17, 19, 20, 22, 23];
       if (boxGSlides.indexOf(roomNum) !== -1) {
         boxGroup.classList.add('box-disabled');
       } else {
@@ -1395,22 +1476,19 @@
       }
 
       // slide-16 전용 요소 노출 여부
-      var slide16Content = document.getElementById('slide-16-content');
-      if (slideNum === 16) {
-        slide16Content.style.display = 'block';
-        document.getElementById('box-g-16').style.opacity = '1';
+      document.getElementById('slide-16-content').style.display = 'none';
+
+      // slide-17 전용 요소 노출 여부
+      var slide17Content = document.getElementById('slide-17-content');
+      if (roomNum === 17) {
+        slide17Content.style.display = 'block';
+        document.getElementById('box-g-17').style.opacity = '1';
       } else {
-        slide16Content.style.display = 'none';
+        slide17Content.style.display = 'none';
       }
 
       // slide-18 전용 요소 노출 여부
-      var slide18Content = document.getElementById('slide-18-content');
-      if (roomNum === 18) {
-        slide18Content.style.display = 'block';
-        document.getElementById('box-g-18').style.opacity = '1';
-      } else {
-        slide18Content.style.display = 'none';
-      }
+      document.getElementById('slide-18-content').style.display = 'none';
 
       // slide-19 전용 요소 노출 여부
       var slide19Content = document.getElementById('slide-19-content');
@@ -1422,13 +1500,7 @@
       }
 
       // slide-21 전용 요소 노출 여부
-      var slide21Content = document.getElementById('slide-21-content');
-      if (roomNum === 21) {
-        slide21Content.style.display = 'block';
-        document.getElementById('box-g-21').style.opacity = '1';
-      } else {
-        slide21Content.style.display = 'none';
-      }
+      document.getElementById('slide-21-content').style.display = 'none';
 
       // slide-20 전용 요소 노출 여부
       var slide20Content = document.getElementById('slide-20-content');
@@ -1448,8 +1520,19 @@
         slide22Content.style.display = 'none';
       }
 
+      // slide-23 전용 요소 노출 여부
+      var slide23Content = document.getElementById('slide-23-content');
+      if (roomNum === 23) {
+        slide23Content.style.display = 'block';
+        document.getElementById('box-g-23').style.opacity = '1';
+      } else {
+        slide23Content.style.display = 'none';
+      }
+
       // slide 6, 10, 16, 21: 2초 후 자동 닫힘
       if ([6, 10, 16, 21].indexOf(roomNum) !== -1) {
+        wrongSound.currentTime = 0;
+        wrongSound.play();
         setTimeout(function () {
           document.getElementById('slide-close').click();
         }, 2000);
@@ -1578,6 +1661,13 @@
       enableBoxGroup();
     });
 
+    document.getElementById('btn-question-17').addEventListener('click', function () {
+      this.style.display = 'none';
+      var box = document.getElementById('box-g-17');
+      box.style.opacity = '0';
+      enableBoxGroup();
+    });
+
     document.getElementById('btn-question-18').addEventListener('click', function () {
       this.style.display = 'none';
       var box = document.getElementById('box-g-18');
@@ -1585,10 +1675,10 @@
       enableBoxGroup();
     });
 
-    document.getElementById('btn-sample-19').addEventListener('click', function () {
+    document.getElementById('btn-question-19').addEventListener('click', function () {
       this.style.display = 'none';
       var box = document.getElementById('box-g-19');
-      box.style.opacity = box.style.opacity === '0' ? '1' : '0';
+      box.style.opacity = '0';
       enableBoxGroup();
     });
 
@@ -1609,6 +1699,13 @@
     document.getElementById('btn-sample-20').addEventListener('click', function () {
       this.style.display = 'none';
       var box = document.getElementById('box-g-20');
+      box.style.opacity = box.style.opacity === '0' ? '1' : '0';
+      enableBoxGroup();
+    });
+
+    document.getElementById('btn-sample-23').addEventListener('click', function () {
+      this.style.display = 'none';
+      var box = document.getElementById('box-g-23');
       box.style.opacity = box.style.opacity === '0' ? '1' : '0';
       enableBoxGroup();
     });
